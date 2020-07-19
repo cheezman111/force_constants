@@ -1,2 +1,7 @@
 FORCE_CONSTANTS
 POSCAR
+*.gif
+*.png
+*.ascii
+*.yaml
+*.dat
