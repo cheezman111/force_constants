@@ -7,55 +7,62 @@ class Force_Constants_BCC:
         self.coordinates.append(displ_coords)
         self.fc_matrices.append(fc_matrix_prototype)
 
-    def swap_indices(self, matrix, i, j):
+    def swap_elements_matrix(self, matrix, swap):
+        i, j = swap
         matrix[[i,j]] = matrix[[j,i]]
         matrix.T[[i,j]] = matrix.T[[j,i]]
 
-    def chg_sign_index(self, matrix, i):
-        matrix[[i]]]=-matrix[[i]]
-        matrix.T[[i]]]=-matrix.T[[i]]
+    def chg_sign_matrix(self, matrix, i):
+        matrix[[i]]=-matrix[[i]]
+        matrix.T[[i]]=-matrix.T[[i]]
 
-    def check_match(self, displ_coords1, displ_coords2):
-        indices1 = list(zip(displ_coords1, range(3)))
-        indices2 = list(zip(displ_coords2, range(3)))
-        sort_f = lambda x : (abs(x[0]),x[1])
+    def swap_elements_list(self, list, swap):
+        i, j = swap
+        l = list.copy()
+        l[i],l[j] = l[j],l[i]
+        return l
 
-        indices1.sort(key=sort_f)
-        indices2.sort(key=sort_f)
+    def find_swaps(self, candidate, target):
+        c = list(map(abs, candidate))
+        t = list(map(abs, target))
+        # check null swap
+        if c == t:
+            return (0,0)
+        # check 0 <-> 1 swap
+        if self.swap_elements_list(c,(0,1)) == t:
+            return (0,1)
+        # check 0 <-> 2 swap
+        if self.swap_elements_list(c,(0,2)) == t:
+            return (0,2)
+        # check 1 <-> 2 swap
+        if self.swap_elements_list(c,(1,2)) == t:
+            return (1,2)
+        return False
 
-        d1, i1 = zip(*indices1)
-        d2, i2 = zip(*indices2)
-
-        if d1 != d2:
-            return None
-
-        chg_sign = [(d1[i]*d2[i] < 0) for i in range(3)]
-        swaps = list(zip(i1,i2,chg_sign))
-        swaps.sort()
-        print(d1)
-        print(d2)
-        print(i1)
-        print(i2)
-
-        return swaps
 
     def gen_fc_matrix(self, input_coords):
-
-        #check against every store fc_matrix for a match.
-
+        #check against every stored fc_matrix for a match.
         for coordinate, fc_matrix in zip(self.coordinates, self.fc_matrices):
-            match = self.check_match(input_coords, coordinate)
-            if match is not None:
+            swap = self.find_swaps(input_coords, coordinate)
+            if swap:
                 break
         else:
             return None
 
-        i1, i2, chg_sign = zip(*match)
-        i1=list(i1)
-        i2=list(i2)
-        fc_matrix[i1] = fc_matrix[i2]
+        # Copy fc_matrix
+        out_matrix = fc_matrix.copy()
 
-        return fc_matrix
+        # Find changes in sign and apply
+        swapped_in = self.swap_elements_list(input_coords, swap)
+
+        for i in range(3):
+            if (swapped_in[i]*coordinate[i] < 0):
+                self.chg_sign_matrix(out_matrix, i)
+
+        # Apply swap
+        self.swap_elements_matrix(out_matrix, swap)
+
+        return out_matrix
 
 
 import numpy as np
