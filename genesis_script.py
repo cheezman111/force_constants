@@ -7,6 +7,7 @@ from copy import copy
 from scipy.spatial.distance import cdist, euclidean
 import pandas as pd
 import pymatgen as mg
+import fc_matcher as fcm
 
 
 def rectify_x(arr, cell_side):
@@ -62,7 +63,7 @@ coords = coords*d
 atoms = Atoms(['Zr' for x in range(len(coords))], positions=coords, cell=[d, d, d], pbc=True)
 
 
-# Create a pymatgen lattice, length units are in Angstroms.
+# Create a pymatgen lattice, lengths are in Angstroms.
 lat = mg.Lattice.cubic(3.5175)
 # Produce a BCC structure with Zr atoms.
 struct = mg.Structure(lat, ['Zr','Zr'], [[0,0,0],[.5,.5,.5]] )
@@ -75,12 +76,48 @@ pc.write_file('POSCAR')
 
 # Hardcode force constant matrices for for 0th-5th nearest neighbors using 
 # experimental values from Heiming-1991.
-fc_Zr_1210 = np.array(([[0, 0, 0],[0, 0, 0],[0, 0, 0]],
-                       [[7798, 0, 0],[0, 8341, 0],[0, 0, 8341]],
-                       [[4960, 0, 0],[0, -2170, 0],[0, 0, -2170]],
-                       [[838, 866, 0],[866, 1410, 0],[0, 0, 1410]],
-                       [[45, -134, -134],[-134, 204, -995],[-134, -995, 204]],
-                       [[172, 703, 703],[703, 172, 703],[703, 703, 172]]), dtype=float) #dyne/cm -> eV/A**2, check zeros
+# NOTE: dyne/cm -> eV/A**2, check zeros
+c1xx =  7798.4
+c1xy =  8341.7
+c2xx =  4960.5
+c2yy = -2170.2
+c3xx =   838.6
+c3zz = -1410.0
+c3xy =   866.9
+c4xx =    45.5
+c4yy =   204.4
+c4yz =  -895.4
+c4xy =  -134.9
+c5xx =   172.1
+c5xy =   703.0
+
+
+# Load force constants as matrices into fc matcher
+fc = fcm.ForceConstantsBCC()
+
+fc.add([0,0,0],np.array([[0   ,0   ,0   ],
+                         [0   ,0   ,0   ],
+                         [0   ,0   ,0   ]]))
+
+fc.add([1,1,1],np.array([[c1xx,c1xy,c1xy],
+                         [c1xy,c1xx,c1xy],
+                         [c1xy,c1xy,c1xx]]))
+
+fc.add([2,0,0],np.array([[c2xx,0   ,0   ],
+                         [0   ,c2yy,0   ],
+                         [0   ,0   ,c2yy]]))
+
+fc.add([2,2,0],np.array([[c3xx,c3xy,0   ],
+                         [c3xy,c3xx,0   ],
+                         [0   ,0   ,c3zz]]))
+
+fc.add([3,1,1],np.array([[c4xx,c4xy,c4xy],
+                         [c4xy,c4yy,c4yz],
+                         [c4xy,c4yz,c4yy]]))
+
+fc.add([2,2,2],np.array([[c5xx,c5xy,c5xy],
+                         [c5xy,c5xx,c5xy],
+                         [c5xy,c5xy,c5xx]]))
 
 
 # Create 4-D array of zeros to fill in with a 3x3 Force Constant matrix

@@ -48,20 +48,15 @@ class Force_Constants_BCC:
                 break
         else:
             return None
-
         # Copy fc_matrix
         out_matrix = fc_matrix.copy()
-
         # Find changes in sign and apply
         swapped_in = self.swap_elements_list(input_coords, swap)
-
         for i in range(3):
             if (swapped_in[i]*coordinate[i] < 0):
                 self.chg_sign_matrix(out_matrix, i)
-
         # Apply swap
         self.swap_elements_matrix(out_matrix, swap)
-
         return out_matrix
 
 
