@@ -62,6 +62,11 @@ coords = coords*d
 
 atoms = Atoms(['Zr' for x in range(len(coords))], positions=coords, cell=[d, d, d], pbc=True)
 '''
+# format a matrix string for output into the FORCE_CONSTANTS file
+def format_matrix(matrix):
+    for row in matrix:
+        pass
+
 
 # Create a pymatgen lattice, lengths are in Angstroms.
 lat = mg.Lattice.cubic(3.5175)
@@ -77,40 +82,40 @@ pc.write_file('POSCAR')
 # Hardcode force constant matrices for for 0th-5th nearest neighbors using 
 # experimental values from Heiming-1991.
 # NOTE: dyne/cm -> eV/A**2, check zeros
-c1xx =  7798.4
-c1xy =  8341.7
-c2xx =  4960.5
-c2yy = -2170.2
-c3xx =   838.6
-c3zz = -1410.0
-c3xy =   866.9
-c4xx =    45.5
-c4yy =   204.4
-c4yz =  -895.4
-c4xy =  -134.9
-c5xx =   172.1
-c5xy =   703.0
-
+unit_conv = .000062415
+c1xx =  7798.4*unit_conv
+c1xy =  8341.7*unit_conv
+c2xx =  4960.5*unit_conv
+c2yy = -2170.2*unit_conv
+c3xx =   838.6*unit_conv
+c3zz = -1410.0*unit_conv
+c3xy =   866.9*unit_conv
+c4xx =    45.5*unit_conv
+c4yy =   204.4*unit_conv
+c4yz =  -895.4*unit_conv
+c4xy =  -134.9*unit_conv
+c5xx =   172.1*unit_conv
+c5xy =   703.0*unit_conv
 
 # Load force constants as matrices into fc matcher.
 fc = fcm.Force_Constants_BCC()
 
 # Values should be sum of others (Bruesch).
-fc.add([0,0,0],np.array([[0   ,0   ,0   ],
-                         [0   ,0   ,0   ],
-                         [0   ,0   ,0   ]]))
+fc.add([0,0,0],np.array([[0.  ,0.  ,0.  ],
+                         [0.  ,0.  ,0.  ],
+                         [0.  ,0.  ,0.  ]]))
 
 fc.add([1,1,1],np.array([[c1xx,c1xy,c1xy],
                          [c1xy,c1xx,c1xy],
                          [c1xy,c1xy,c1xx]]))
 
-fc.add([2,0,0],np.array([[c2xx,0   ,0   ],
-                         [0   ,c2yy,0   ],
-                         [0   ,0   ,c2yy]]))
+fc.add([2,0,0],np.array([[c2xx,0.  ,0.  ],
+                         [0.  ,c2yy,0.  ],
+                         [0.  ,0.  ,c2yy]]))
 
-fc.add([2,2,0],np.array([[c3xx,c3xy,0   ],
-                         [c3xy,c3xx,0   ],
-                         [0   ,0   ,c3zz]]))
+fc.add([2,2,0],np.array([[c3xx,c3xy,0.  ],
+                         [c3xy,c3xx,0.  ],
+                         [0.  ,0.  ,c3zz]]))
 fc.add([3,1,1],np.array([[c4xx,c4xy,c4xy],
                          [c4xy,c4yy,c4yz],
                          [c4xy,c4yz,c4yy]]))
@@ -131,13 +136,15 @@ N = len(struct.sites)
 fc_filename = 'FORCE_CONSTANTS'
 fc_file = open(fc_filename,"w")
 # Write total number of atoms to file.
-fc_file.write(str(N)+' '+str(N)+'\n')
+fc_file.write('{:3} {:3}'.format(N,N) + '\n')
+# Set numpy print options to print to 15 digits precision.
+np.set_printoptions(precision=15, sign=' ',floatmode='fixed')
 
 # Itereate over pairs of of atoms (sites) in supercell.
 for index1, site1 in enumerate(struct.sites):
     for index2, site2 in enumerate(struct.sites):
         # Write the index of the two current atoms to file.
-        fc_file.write(str(index1)+' '+str(index2)+'\n')
+        fc_file.write('{:3} {:3}'.format(index1,index2) + '\n')
         # Displ_coord is calcualted as a numpy array.
         displ_coord = (site2.frac_coords-site1.frac_coords)*4
         # Convert individual elements to list of ints.
@@ -156,7 +163,7 @@ for index1, site1 in enumerate(struct.sites):
         if fc_matrix is None:
             fc_matrix = fc.gen_fc_matrix([0,0,0])
         # Form string from matrix, remove brackets, and write to file.
-        matrix_string = str(fc_matrix).replace('[','').replace(']','')+'\n'
+        matrix_string = str(fc_matrix).replace('[',' ').replace(']',' ')+'\n'
         fc_file.write(matrix_string)
 fc_file.close()
 
