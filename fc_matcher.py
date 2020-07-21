@@ -59,15 +59,15 @@ class Force_Constants_BCC:
         self.swap_elements_matrix(out_matrix, swap)
         return out_matrix
 
+if __name__ == '__main__':
+    import numpy as np
+    f = Force_Constants_BCC()
 
-import numpy as np
-f = Force_Constants_BCC()
-
-c1=[0,0,1]
-fc1=np.array([[1,2,3],[2,4,5],[3,5,9]])
-f.add(c1,fc1)
-r = f.gen_fc_matrix([0,0,1])
-print(r)
+    c1=[0,0,1]
+    fc1=np.array([[1,2,3],[2,4,5],[3,5,9]])
+    f.add(c1,fc1)
+    r = f.gen_fc_matrix([0,0,1])
+    print(r)
 
 
 

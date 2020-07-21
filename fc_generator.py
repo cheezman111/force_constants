@@ -93,8 +93,9 @@ c5xy =   703.0
 
 
 # Load force constants as matrices into fc matcher
-fc = fcm.ForceConstantsBCC()
+fc = fcm.Force_Constants_BCC()
 
+# values should be sum of others (Bruesch)
 fc.add([0,0,0],np.array([[0   ,0   ,0   ],
                          [0   ,0   ,0   ],
                          [0   ,0   ,0   ]]))
@@ -118,6 +119,18 @@ fc.add([3,1,1],np.array([[c4xx,c4xy,c4xy],
 fc.add([2,2,2],np.array([[c5xx,c5xy,c5xy],
                          [c5xy,c5xx,c5xy],
                          [c5xy,c5xy,c5xx]]))
+
+# Generate FORCE_CONSTANTS file
+
+N = len(struct.sites)
+fc_filename = 'FORCE_CONSTANTS'
+fc_file = open(fc_filename,"w")
+fc_file.write(str(N)+' '+str(N)+'\n')
+
+for site1 in struct.sites:
+    for site2 in struct.sites:
+        displ_coord = (site2.frac_coords-site1.frac_coords)*4
+        fc.gen_fc_matrix(list(displ_coord))
 
 
 # Create 4-D array of zeros to fill in with a 3x3 Force Constant matrix

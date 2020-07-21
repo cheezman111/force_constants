@@ -5,3 +5,4 @@ POSCAR
 *.ascii
 *.yaml
 *.dat
+/__pycache__
