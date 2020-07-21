@@ -9,7 +9,7 @@ import pandas as pd
 import pymatgen as mg
 import fc_matcher as fcm
 
-
+'''
 def rectify_x(arr, cell_side):
     rectified = np.zeros(3)
     for i, elem in enumerate(arr):
@@ -61,7 +61,7 @@ coords = np.array(coords)
 coords = coords*d
 
 atoms = Atoms(['Zr' for x in range(len(coords))], positions=coords, cell=[d, d, d], pbc=True)
-
+'''
 
 # Create a pymatgen lattice, lengths are in Angstroms.
 lat = mg.Lattice.cubic(3.5175)
@@ -92,10 +92,10 @@ c5xx =   172.1
 c5xy =   703.0
 
 
-# Load force constants as matrices into fc matcher
+# Load force constants as matrices into fc matcher.
 fc = fcm.Force_Constants_BCC()
 
-# values should be sum of others (Bruesch)
+# Values should be sum of others (Bruesch).
 fc.add([0,0,0],np.array([[0   ,0   ,0   ],
                          [0   ,0   ,0   ],
                          [0   ,0   ,0   ]]))
@@ -111,26 +111,54 @@ fc.add([2,0,0],np.array([[c2xx,0   ,0   ],
 fc.add([2,2,0],np.array([[c3xx,c3xy,0   ],
                          [c3xy,c3xx,0   ],
                          [0   ,0   ,c3zz]]))
-
 fc.add([3,1,1],np.array([[c4xx,c4xy,c4xy],
                          [c4xy,c4yy,c4yz],
                          [c4xy,c4yz,c4yy]]))
-
 fc.add([2,2,2],np.array([[c5xx,c5xy,c5xy],
                          [c5xy,c5xx,c5xy],
                          [c5xy,c5xy,c5xx]]))
 
-# Generate FORCE_CONSTANTS file
+# Hacky MIC, add [3,3,1] and [3,3,3]. Both maapped to [1,1,1]
+
+#fc.add([3,3,1], fc.gen_fc_matrix([1,1,1]))
+#fc.add([3,3,3], fc.gen_fc_matrix([1,1,1]))
+
+#fc.add([3,1,1], fc.gen_fc_matrix([1,1,1]))
+
+# Generate FORCE_CONSTANTS file.
 
 N = len(struct.sites)
 fc_filename = 'FORCE_CONSTANTS'
 fc_file = open(fc_filename,"w")
+# Write total number of atoms to file.
 fc_file.write(str(N)+' '+str(N)+'\n')
 
-for site1 in struct.sites:
-    for site2 in struct.sites:
+# Itereate over pairs of of atoms (sites) in supercell.
+for index1, site1 in enumerate(struct.sites):
+    for index2, site2 in enumerate(struct.sites):
+        # Write the index of the two current atoms to file.
+        fc_file.write(str(index1)+' '+str(index2)+'\n')
+        # Displ_coord is calcualted as a numpy array.
         displ_coord = (site2.frac_coords-site1.frac_coords)*4
-        fc.gen_fc_matrix(list(displ_coord))
+        # Convert individual elements to list of ints.
+        displ_coord = list(map(int, map(round, displ_coord)))
+        # Delete the following line.
+        #fc_file.write(str(displ_coord)+'\n')
+        '''
+        print('new iter:')
+        print(type(displ_coord))
+        print(displ_coord)
+        print()
+        print()
+        '''
+        fc_matrix = fc.gen_fc_matrix(list(displ_coord))
+        # If no fc_matrix matches, use zeros.
+        if fc_matrix is None:
+            fc_matrix = fc.gen_fc_matrix([0,0,0])
+        # Form string from matrix, remove brackets, and write to file.
+        matrix_string = str(fc_matrix).replace('[','').replace(']','')+'\n'
+        fc_file.write(matrix_string)
+fc_file.close()
 
 
 # Create 4-D array of zeros to fill in with a 3x3 Force Constant matrix
@@ -138,6 +166,7 @@ for site1 in struct.sites:
 #
 # E.g.   (2,3,x,y) will be the value of the x-component of the force acting
 #        on the 2nd atom when the 3rd atom moves in the y direction.
+'''
 atom_pairs = []
 nearest_neighbors = []
 fc_arr = np.zeros((len(coords), len(coords), 3, 3), dtype=float)
@@ -156,7 +185,7 @@ for i, coord1 in enumerate(coords):
 
         fc_arr[i][j][:] = fc_Zr_1210[nn]
 
-fc_filename = 'FORCE_CONSTANTS'
+fc_filename = 'FORCE_CONSTANTS_TEST'
 fc_file = open(fc_filename,"w")
 fc_file.write(str(len(coords)) + ' ' + str(len(coords)) + '\n')
 
@@ -173,4 +202,4 @@ for i, coord1 in enumerate(coords):
 
 fc_file.close()
 print('Done.')
-
+'''
