@@ -6,3 +6,4 @@ POSCAR
 *.yaml
 *.dat
 /__pycache__
+*.hdf5
