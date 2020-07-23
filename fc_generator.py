@@ -10,7 +10,8 @@ import pymatgen as mg
 import fc_matcher as fcm
 import h5py
 
-supercell_size = 4
+supercell_size = 2
+mic = 2
 
 # Create a pymatgen lattice, lengths are in Angstroms.
 lat = mg.Lattice.cubic(3.5175)
@@ -42,6 +43,7 @@ c4xy =   -134.9*unit_conv
 c5xx =    172.1*unit_conv
 c5xy =    703.0*unit_conv
 
+
 # Load force constants as matrices into fc matcher.
 fc = fcm.Force_Constants_BCC()
 
@@ -62,22 +64,24 @@ fc.add([2,2,0],np.array([[c3xx,c3xy,0.  ],
                          [c3xy,c3xx,0.  ],
                          [0.  ,0.  ,c3zz]]))
 
-#'''
-fc.add([3,1,1],np.array([[c4xx,c4xy,c4xy],
-                         [c4xy,c4yy,c4yz],
-                         [c4xy,c4yz,c4yy]]))
+if mic != 3:
+    fc.add([3,1,1],np.array([[c4xx,c4xy,c4xy],
+                             [c4xy,c4yy,c4yz],
+                             [c4xy,c4yz,c4yy]]))
 #'''
 
 fc.add([2,2,2],np.array([[c5xx,c5xy,c5xy],
                          [c5xy,c5xx,c5xy],
                          [c5xy,c5xy,c5xx]]))
 
-# Hacky MIC, add [3,3,1] and [3,3,3]. Both maapped to [1,1,1]
+# Hacky MIC, add [3,3,1] and [3,3,3]. Both mapped to [1,1,1]
 
-fc.add([3,3,1], fc.gen_fc_matrix([1,1,1]))
-fc.add([3,3,3], fc.gen_fc_matrix([1,1,1]))
+if mic != 1:
+    fc.add([3,3,1], fc.gen_fc_matrix([1,1,1]))
+    fc.add([3,3,3], fc.gen_fc_matrix([1,1,1]))
 
-#fc.add([3,1,1], fc.gen_fc_matrix([1,1,1]))
+if mic == 3:
+    fc.add([3,1,1], fc.gen_fc_matrix([1,1,1]))
 
 
 # Create the force constants tensor. 
